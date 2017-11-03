@@ -1,0 +1,122 @@
+####  PBS preamble
+
+#PBS -N genexp
+
+# Change number of cores, amount of memory, walltime.
+# (1) Set nodes=1, mem=#cores*8gb.
+#PBS -l nodes=1:ppn=4,mem=32gb,walltime=1:00:00
+
+# (2) Set -t argument to 1-n, where n is the number of
+# species codes in SPECIESCODES array.
+#PBS -t 1-2
+
+#PBS -V
+#PBS -m abe
+#PBS -j oe
+
+#PBS -A eeb416f17_flux
+#PBS -q flux
+
+####  End PBS preamble
+
+# (3) Set list of species from http://web.corral.tacc.utexas.edu/OneKP/
+# Each species will be processed by its own job array element. Make sure to provide the Specieslist in order for pbs to run.
+# The following is an example fo specieslist.
+SPECIESLIST=( \
+IZNU-Ipomoea_lobata \
+JDTY-Rhodophiala_pratensis \
+)
+
+#  Show nodes/cores you're running on
+if [ -n "$PBS_JOBID" ]; then
+	echo "Job running on:"
+	qstat -n $PBS_JOBID | tail -n+7
+fi
+
+#  Change to the directory you submitted from
+if [ -n "$PBS_O_WORKDIR" ]; then
+	cd $PBS_O_WORKDIR
+fi
+echo "Job working directory:"
+pwd
+echo
+
+# Put your job commands here:
+#
+
+### Global variables
+
+let err=0
+
+
+### local functions
+
+# Get and expand a file.
+
+get() # $1=html prefix $2=filename
+{
+	if [ -e ${2%.bz2} ]; then
+		echo `date` "${2%.bz2} already exists, skipping expansion"
+	else
+		if [ -e $2 ]; then
+			echo `date` "$2 already exists, skipping wget"
+		else
+			echo `date` "wget $1/$2"
+			if ! wget $1/$2 2>/dev/null; then
+				echo "can't wget $1/$2, skipping"
+				let err=err+1
+			fi
+		fi
+		echo `date` "Expanding $2"
+		if ! bunzip2 $2; then
+			echo "can't expand $2, skipping"
+			let err=err+1
+		fi
+	fi
+}
+
+
+### Main script begins here
+
+# Obtain species code
+SPECIESNAME=${SPECIESLIST[`expr $PBS_ARRAYID - 1`]}
+SPECIESCODE=${SPECIESNAME:0:4}
+
+# Make and change to this species directory
+mkdir -p $SPECIESCODE
+if ! cd $SPECIESCODE; then
+	echo "can't change to workflow directory $SPECIESCODE, quitting"
+	exit 1
+fi
+echo `date` "Species code $SPECIESCODE processing begins"
+echo `date` "Job element $PBS_ARRAYID running in directory `pwd`"
+
+echo `date` "Get databases"
+get http://web.corral.tacc.utexas.edu/OneKP/${SPECIESNAME}/assembly ${SPECIESCODE}-SOAPdenovo-Trans-assembly.fa.bz2
+get http://web.corral.tacc.utexas.edu/OneKP/${SPECIESNAME}/solexa-reads ${SPECIESCODE}-read_1.fq.bz2
+get http://web.corral.tacc.utexas.edu/OneKP/${SPECIESNAME}/solexa-reads ${SPECIESCODE}-read_2.fq.bz2
+
+if [ $err -gt 0 ]; then
+	echo "Error(s) in obtaining/expanding $SPECIESCODE files, quitting"
+	exit 1
+fi
+
+echo `date` "Index transcriptome and align reads"
+bwa index -a is ${SPECIESCODE}-SOAPdenovo-Trans-assembly.fa > bwa_index.stdout 2> bwa_index.stderr
+bwa aln -t$PBS_NP ${SPECIESCODE}-SOAPdenovo-Trans-assembly.fa ${SPECIESCODE}-read_1.fq > ${SPECIESCODE}_R1.sai 2> ${SPECIESCODE}_R1_bwa_aln.stderr
+bwa aln -t$PBS_NP ${SPECIESCODE}-SOAPdenovo-Trans-assembly.fa ${SPECIESCODE}-read_2.fq > ${SPECIESCODE}_R2.sai 2> ${SPECIESCODE}_R2_bwa_aln.stderr
+
+echo `date` "Produce sam alignment file"
+bwa sampe ${SPECIESCODE}-SOAPdenovo-Trans-assembly.fa ${SPECIESCODE}_R1.sai ${SPECIESCODE}_R2.sai ${SPECIESCODE}-read_1.fq ${SPECIESCODE}-read_2.fq > ${SPECIESCODE}.sam 2> ${SPECIESCODE}_sampe.stderr
+
+echo `date` "Return only primary mapped reads"
+samtools view -b ${SPECIESCODE}.sam > ${SPECIESCODE}.bam
+samtools view -F 0x904 -f 0x40 -b ${SPECIESCODE}.bam > output.filter.bam
+
+echo `date` "Get read counts"
+samtools sort -@ $PBS_NP -m 8G output.filter.bam -o output.filter.sorted.bam
+samtools index output.filter.sorted.bam 
+samtools idxstats output.filter.sorted.bam > output.counts.txt
+
+echo `date` "Species code $SPECIESCODE processing complete"
+exit 0

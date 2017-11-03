@@ -1,0 +1,48 @@
+EEB416 F17 Exam 1
+Younggook Oh
+
+1. Yes
+2. False
+3. This e-value of 3.4e-178 is very close to the 
+4. Cloning and PCR
+5. 1 for Prokaryote and 2 for Eukaryote
+
+6. 
+- Accession #: AFV73403
+- BLASTp
+- Using the parameter of 1000, there was 1000 hits
+- From the taxonomy report, there was 148 organism hits and among those hits, 148 organisms displayed homology.
+- XP_021678755 - (0 e-value), XP_021601648 - (0 e-value), XP_002302428 - (1e-159 e-value), XP_021903563 - (6e-157 e-value), 
+XP_022772895 - (6e-156 e-value), XP_011017151 - (5e-155 e-value)
+
+7.
+- Accession #: JX569771
+- BLASTn
+- 39 hits
+- From the taxonomy report, there was 21 organism hits and among those hits, 16 organisms displayed homology.
+- XM_021823063 - (0 e-value), XM_021745956 - (0 e-value), XM_011018849 - (2e-127 e-value), XM_002510109 - (3e-96), 
+XM_010103368 - (4e-95 e-value), XM_021964517 - (6e-88)
+
+8.
+- https://www.helsinki.fi/en/researchgroups/metapopulation-research-centre/glanville-fritillary-butterfly-genome-project - University of Helsinki
+- LiSs (Linkage map Superscaffolder) for superscaffolding - According to the article.
+- Lep-MAP software for constructing accurate linkage maps using high-density SNP data, MIP Scaffolder for genome scaffolding, and Coral and HybridSHREC for read error correction.
+- Yes, in NCBI database under BioProject - https://www.ncbi.nlm.nih.gov/bioproject/?term=Glanville%20fritillary%20butterfly
+- Using scaffolding and NGS to develop SNP or using a SNP genetic marker.
+
+9.
+- 101993, “grep -c “>” Homo_sapiens.GRCh38.cds.all.fa”
+- 206676,0 “wc -l Homo_sapiens.GRCh38.cds.all.fa”
+- Yes, grep -c "AGATCGG" Homo_sapiens.GRCh38.cds.all.fa
+
+10.
+- File on Git - “Homo_sapiens.GRCh38.cds.all_sorted.fa”
+- File on Git - “Homo_sapiens.GRCh38.82.abinitio.bed”
+- File on Git - “Homo_sapiens.GRCh38.82.abinitio_exon.gtf “and “Homo_sapiens.GRCh38.82.abinitio_transcript.gtf”
+
+11. 
+- 1 ~ 3 in the Exam1.html file.
+
+12. 
+- Refer to genexp.pbs
+- This pbs file is a generalized version of the Dr. Antonelli’s pbs without the species name defined.
