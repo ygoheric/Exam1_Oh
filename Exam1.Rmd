@@ -1,0 +1,46 @@
+---
+title: "Exam 1 R File"
+author: "Younggook Oh"
+date: "10/31/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Load Packages
+```{r load}
+t <- read.csv("Homo_sapiens.GRCh38.82.abinitio_transcript.gtf", sep ='\t', header = FALSE)
+e <- read.csv("Homo_sapiens.GRCh38.82.abinitio_exon.gtf", sep ='\t', header = FALSE)
+library(ggplot2)
+```
+
+## Transcript and Exon Statistics
+```{r stats}
+summary(e)
+summary(t)
+```
+## Calculate Length of Chromosomes
+```{r refine data}
+e$length <- ((e$V5 - e$V4) - 1)
+t$length <- ((t$V5 - t$V4) - 1)
+```
+## Frequency Histogram - Question #11 - 2
+```{r frequency histogram}
+X <- subset(e, e$V1 == c("X", "Y"))
+E <- aggregate(e$length, list(e$V1), mean)
+Y <- aggregate(e$length,list(e$V1), sum)
+E$Ratio <- E$x/Y$x
+ggplot(X, aes(x = X$length)) + geom_histogram(bins = 200)
+```
+
+## Correlation Coefficient - Question #11 - 3
+```{r correlation plot}
+ggplot(E, aes(x = E$Ratio, y = E$x)) + geom_point() #Graph shows no correlation
+```
+
+## Exon - Question #11 - 1
+```{r table}
+E1 <- aggregate(e$V1, list(e$V1), summary)
+E$Stderr <- (sd(E$x)/sqrt(E1$x))
+```
